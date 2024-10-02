@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend Book Application</title>
+    <link rel="stylesheet" href="./css/dashboard-styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Navbar -->
+        <nav class="navbar">
+            <div class="logo">ISRASI</div>
+            <div class="search-bar">
+                <input type="text" placeholder="Search books online">
+                <button>🔍</button>
+            </div>
+            <div class="icons">
+                <button class="settings-icon">⚙️</button>
+                <button class="profile-icon">👤</button>
+            </div>
+        </nav>
+
+        <!-- Library Section -->
+        <section class="library">
+            <h1>MY LIBRARY</h1>
+            <div class="book-grid">
+                <!-- Book 1 -->
+                <div class="book-card" onclick="openBook('book1')">
+                    <div class="book-cover"></div>
+                    <p class="book-title">Book 1</p>
+                    <p id="book1-progress" class="book-progress">progress 0%</p>
+                </div>
+                <!-- Book 2 -->
+                <div class="book-card" onclick="openBook('book2')">
+                    <div class="book-cover"></div>
+                    <p class="book-title">Book 2</p>
+                    <p id="book2-progress" class="book-progress">progress 0%</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Book Content Modal -->
+        <div id="bookModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal()">&times;</span>
+                <h2 id="book-title"></h2>
+                <h3 id="chapter-title"></h3>
+                <p id="page-content"></p>
+
+                <div class="controls">
+                    <button onclick="previousPage()">Previous</button>
+                    <button onclick="nextPage()">Next</button>
+                </div>
+                <button class="speaker-button" onclick="readChapter()">🔊 Read Aloud</button>
+                <button class="back-button" onclick="closeModal()">Back to Library</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="./scripts/dashboard-script.js"></script>
+</body>
+</html>

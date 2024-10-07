@@ -1,3 +1,11 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
+body{
+    margin: 0;
+    height: 100vh;
+    width: 100vw;
+    background-color: #D9D9D9;
+}
 .container {
     font-family: Arial, sans-serif;
 }
@@ -7,16 +15,115 @@
     justify-content: space-between;
     align-items: center;
     padding: 10px 20px;
-    background-color: #333;
+    background-color: #D9D9D9;
     color: white;
 }
 
-.search-bar input {
-    padding: 5px;
+.logo img{
+    height: 41px;
+    width: 200px;
 }
 
-.icons button {
-    margin-left: 10px;
+.search-bar{
+    height: 40px;
+    display: flex;
+}
+
+.search-bar input {
+    padding: 10px 150px;
+    border-radius: 20px 0px 0px 20px;
+    border-width: 0px;
+    background-color: #bebebe;
+    color: #333;
+}
+
+.search-bar button{
+    margin-left: 0px;
+    padding: 9px;
+    border-radius: 0px 20px 20px 0px;
+    border-width: 0px;
+    background-color: #bebebe;
+}
+
+
+.search-icon {
+    display: flex;          /* Ensures the image is centered */
+    justify-content: center; /* Center the image horizontally */
+    align-items: center;    /* Center the image vertically */
+    padding: 9px;          /* Adjust padding as needed */
+    border-radius: 0px 20px 20px 0px; /* Keep the existing border radius */
+    border: none;          /* Optional: remove border for a cleaner look */
+    background: transparent; /* Optional: set background to transparent */
+    cursor: pointer;       /* Change cursor on hover */
+}
+
+.search-icon img {
+    width: 40px;           /* Set the width of the image */
+    height: auto;          /* Maintain aspect ratio */
+    display: block;        /* Remove bottom spacing */
+}
+
+.icons {
+    display: flex; /* Align buttons horizontally */
+    gap: 10px; /* Space between buttons */
+}
+
+.settings-icon, .profile-icon {
+    display: flex; /* Ensures the image is centered */
+    justify-content: center; /* Center the image horizontally */
+    align-items: center; /* Center the image vertically */
+    padding: 9px; /* Adjust padding as needed */
+    border-radius: 50%; /* Make buttons circular */
+    border: none; /* Remove border */
+    background: transparent; /* Transparent background */
+    cursor: pointer; /* Change cursor on hover */
+    transition: transform 0.3s ease; /* Smooth transition for transform */
+}
+
+.settings-icon img, .profile-icon img {
+    width: 50px; /* Set the size of the images */
+    height: auto; /* Maintain aspect ratio */
+    display: block; /* Remove bottom spacing */
+}
+
+/* Spin effect on hover for settings icon */
+.settings-icon:hover {
+    animation: spin 0.5s forwards; /* Spin clockwise on hover */
+}
+
+/* Spin effect on click for settings icon */
+.settings-icon:active {
+    animation: spin-anticlockwise 0.5s forwards; /* Spin anticlockwise on click */
+}
+
+/* Expand effect on hover for profile icon */
+.profile-icon:hover {
+    transform: scale(1.1); /* Slightly increase size on hover */
+}
+
+/* Expand further effect on click for profile icon */
+.profile-icon:active {
+    transform: scale(1.15); /* Increase size on click */
+}
+
+/* Spin animation keyframes */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Spin anticlockwise animation keyframes */
+@keyframes spin-anticlockwise {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(-360deg);
+    }
 }
 
 .library {

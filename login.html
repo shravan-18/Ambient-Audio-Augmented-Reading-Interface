@@ -8,18 +8,18 @@
 </head>
 <body>
     <div class="israsi">
-        <img src="css/img/ISRASI.png">
+        <img src="css/img/ISRASI.png" alt="ISRASI">
     </div>
     <div class="box">
-        <form action="">
+        <form onsubmit="return login()">
             <div class="input-box">
                 <h2>LOGIN</h2>
-                <input type="text" required>
+                <input type="text" id="username" required>
                 <span>Username</span>
                 <i></i>
             </div>
             <div class="input-box">
-                <input type="password" required>
+                <input type="password" id="password" required>
                 <span>Enter Password</span>
                 <i></i>
             </div>
@@ -30,6 +30,7 @@
             </div>
         </form>
     </div>
+    <script src="./scripts/login-scripts.js"></script>
     <footer>
 
     </footer>

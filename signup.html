@@ -33,7 +33,7 @@
                 <span>Confirm Password</span>
                 <i></i>
             </div> 
-            <input type="submit" value="Login">
+            <input type="submit" value="Login" onclick="redirectToDashboard()">
             <div class="links">
                 <a href="#">Help</a>
                 <a href="login.html">Log in</a>
@@ -42,5 +42,10 @@
     </div>
     <footer>
     </footer>    
+    <script>
+        function redirectToDashboard() {
+            window.location.href = 'dashboard.html';
+        }
+    </script>
 </body>
 </html>

@@ -141,7 +141,6 @@ function showChapter() {
     document.getElementById('book-title').innerText = currentBook.title;
     document.getElementById('chapter-title').innerText = chapter.title;
     document.getElementById('page-content').innerText = chapter.page;
-
     // Toggle visibility of next/previous buttons
     const prevButton = document.querySelector('.controls button:first-of-type');
     prevButton.style.display = currentChapterIndex === 0 ? 'none' : 'inline-block';
@@ -151,60 +150,34 @@ function showChapter() {
     saveProgress();  // Ensure progress is saved after showing the chapter
 }
 
-/*
-let speechSynthesisUtterance = null;
-function readChapter() {
-    const chapterText = "Hello! This is a test for text-to-speech functionality."; // Hardcoded for testing
+let speech = null;
 
-    // Check if the browser supports speech synthesis
+function readAloud() {
+    console.log("readAloud function called");
     if (!window.speechSynthesis) {
-        console.error("Speech Synthesis API not supported by this browser.");
-        alert("Your browser does not support text-to-speech functionality.");
+        console.log("Speech synthesis not supported");
+        alert("Sorry, your browser doesn't support text to speech!");
         return;
     }
 
-    // Cancel any existing speech synthesis (if a user clicks multiple times)
-    if (speechSynthesisUtterance) {
-        window.speechSynthesis.cancel();
+    console.log("Attempting to read aloud");
+    if (speech && speech.speaking) {
+        console.log("Speech is already in progress, cancelling");
+        speech.cancel();
+        return;
     }
 
-    // Create a new SpeechSynthesisUtterance
-    speechSynthesisUtterance = new SpeechSynthesisUtterance(chapterText);
-    speechSynthesisUtterance.lang = 'en-US'; // Set language
-    speechSynthesisUtterance.volume = 1;      // Volume (0 to 1)
-    speechSynthesisUtterance.pitch = 1;       // Pitch (0 to 2)
-    speechSynthesisUtterance.rate = 1;        // Rate (0.1 to 10)
+    const text = document.getElementById('page-content').innerText;
+    console.log("Text to be read:", text);
+    speech = new SpeechSynthesisUtterance(text);
+    speech.rate = 1;
+    speech.pitch = 1;
 
-    // Attempt to set the voice
-    const voices = window.speechSynthesis.getVoices();
-    if (voices.length > 0) {
-        speechSynthesisUtterance.voice = voices[0]; // Use the first available voice
-    } else {
-        console.warn("No voices available. Using default system voice.");
-    }
-
-    console.log("Starting to speak...");
-
-    // Start speaking the text
-    window.speechSynthesis.speak(speechSynthesisUtterance);
-
-    // Log when speech ends
-    speechSynthesisUtterance.onend = () => {
-        console.log("Speech has finished.");
-    };
-
-    // Log any errors
-    speechSynthesisUtterance.onerror = (event) => {
-        console.error("Speech synthesis error:", event);
-    };
+    window.speechSynthesis.speak(speech);
+    console.log("Speech started");
 }
 
-// Load voices when the page is loaded
-window.speechSynthesis.onvoiceschanged = () => {
-    console.log("Voices loaded.");
-};
-*/
-
+// Make sure this function is not nested inside any other function
 function closeModal() {
     document.getElementById('bookModal').style.display = 'none';
     // Stop any ongoing speech when the modal is closed
@@ -212,11 +185,11 @@ function closeModal() {
         window.speechSynthesis.cancel();
     }
 }
-
 function previousPage() {
     if (currentChapterIndex > 0) {
         currentChapterIndex--;
         showChapter();
+        saveProgress();
     }
 }
 
@@ -224,42 +197,20 @@ function nextPage() {
     if (currentChapterIndex < currentBook.chapters.length - 1) {
         currentChapterIndex++;
         showChapter();
+        saveProgress();
     }
 }
 
 function saveProgress() {
     const progress = ((currentChapterIndex + 1) / currentBook.chapters.length) * 100;
     localStorage.setItem(currentBook.title + '_progress', currentChapterIndex);
-    updateProgressDisplay(currentBook.title, progress);
+    document.getElementById(currentBook.title.toLowerCase().replace(' ', '') + '-progress').innerText = `progress ${progress.toFixed(0)}%`;
 }
 
 function loadProgress(bookId) {
-    console.log(bookId + ' is the book ID');
-    
-    const storedChapterIndex = localStorage.getItem(books[bookId].title + '_progress');
-    
-    if (storedChapterIndex !== null) {
-        currentChapterIndex = parseInt(storedChapterIndex, 10);
-        const progress = ((currentChapterIndex + 1) / books[bookId].chapters.length) * 100;
-        console.log('Chapter Index:', currentChapterIndex);
-        updateProgressDisplay(books[bookId].title, progress);
-    } else {
-        // Handle the case when progress is not found (i.e., the first time the book is opened)
-        currentChapterIndex = 0;
-        console.log('No progress found, starting from Chapter 1');
-        updateProgressDisplay(books[bookId].title, 0);  // Initial progress is 0%
-    }
-}
-
-function updateProgressDisplay(bookTitle, progress) {
-    // Sanitize the bookTitle to create a valid ID (replace spaces and remove special characters)
-    const progressElementId = sanitizeBookTitle(bookTitle) + '-progress';  
-    const progressElement = document.getElementById(progressElementId);
-    
-    if (progressElement) {
-        progressElement.innerText = `progress ${progress.toFixed(0)}%`;
-    } else {
-        console.log('Progress element not found for:', progressElementId);
+    const storedProgress = localStorage.getItem(books[bookId].title + '_progress');
+    if (storedProgress) {
+        document.getElementById(bookId + '-progress').innerText = `progress ${parseFloat(storedProgress).toFixed(0)}%`;
     }
 }
 

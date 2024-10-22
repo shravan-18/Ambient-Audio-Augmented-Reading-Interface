@@ -10,7 +10,7 @@ function login() {
     if (username === VALID_USERNAME && password === VALID_PASSWORD) {
         alert("Login successful!");
         // Redirect to another page or take some action
-        window.location.href = "dashboard.html"; 
+        window.location.href = "Dashboard.html"; 
     } else {
         alert("Invalid username or password.");
     }

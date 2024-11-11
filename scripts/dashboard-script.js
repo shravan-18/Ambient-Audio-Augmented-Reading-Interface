@@ -127,6 +127,11 @@ const books = {
 
 let currentBook = null;
 let currentChapterIndex = 0;
+let speech = null;
+let isSpeaking = false;
+let isPaused = false;
+let currentText = '';
+let currentPosition = 0;
 
 function openBook(bookId) {
     currentBook = books[bookId];
@@ -141,50 +146,133 @@ function showChapter() {
     document.getElementById('book-title').innerText = currentBook.title;
     document.getElementById('chapter-title').innerText = chapter.title;
     document.getElementById('page-content').innerText = chapter.page;
+    
     // Toggle visibility of next/previous buttons
     const prevButton = document.querySelector('.controls button:first-of-type');
     prevButton.style.display = currentChapterIndex === 0 ? 'none' : 'inline-block';
     const nextButton = document.querySelector('.controls button:last-of-type');
     nextButton.style.display = currentChapterIndex === currentBook.chapters.length - 1 ? 'none' : 'inline-block';
     
-    saveProgress();  // Ensure progress is saved after showing the chapter
+    // Reset speech state when changing chapters
+    stopSpeech();
+    updateSpeakerButton();
+    
+    saveProgress();
 }
-
-let speech = null;
 
 function readAloud() {
     console.log("readAloud function called");
+    
     if (!window.speechSynthesis) {
         console.log("Speech synthesis not supported");
         alert("Sorry, your browser doesn't support text to speech!");
         return;
     }
-
-    console.log("Attempting to read aloud");
-    if (speech && speech.speaking) {
-        console.log("Speech is already in progress, cancelling");
-        speech.cancel();
-        return;
+    
+    if (isPaused) {
+        // Resume reading from where we left off
+        resumeSpeech();
+    } else if (isSpeaking) {
+        // Pause the current speech
+        pauseSpeech();
+    } else {
+        // Start new speech
+        startNewSpeech();
     }
+    
+    updateSpeakerButton();
+}
 
-    const text = document.getElementById('page-content').innerText;
-    console.log("Text to be read:", text);
-    speech = new SpeechSynthesisUtterance(text);
+function startNewSpeech() {
+    currentText = document.getElementById('page-content').innerText;
+    currentPosition = 0;
+    
+    speech = new SpeechSynthesisUtterance(currentText);
     speech.rate = 1;
     speech.pitch = 1;
-
+    
+    speech.onend = function() {
+        if (!isPaused) {
+            isSpeaking = false;
+            isPaused = false;
+            currentPosition = 0;
+            updateSpeakerButton();
+        }
+    };
+    
+    speech.onboundary = function(event) {
+        currentPosition = event.charIndex;
+    };
+    
     window.speechSynthesis.speak(speech);
-    console.log("Speech started");
+    isSpeaking = true;
+    isPaused = false;
 }
 
-// Make sure this function is not nested inside any other function
-function closeModal() {
-    document.getElementById('bookModal').style.display = 'none';
-    // Stop any ongoing speech when the modal is closed
-    if (window.speechSynthesis) {
-        window.speechSynthesis.cancel();
+function pauseSpeech() {
+    if (speech && isSpeaking) {
+        window.speechSynthesis.cancel(); // Cancel current speech
+        isPaused = true;
+        isSpeaking = false;
     }
 }
+
+function resumeSpeech() {
+    if (isPaused && currentText) {
+        // Create new utterance starting from last known position
+        const remainingText = currentText.substring(currentPosition);
+        speech = new SpeechSynthesisUtterance(remainingText);
+        speech.rate = 1;
+        speech.pitch = 1;
+        
+        speech.onend = function() {
+            if (!isPaused) {
+                isSpeaking = false;
+                isPaused = false;
+                currentPosition = 0;
+                updateSpeakerButton();
+            }
+        };
+        
+        speech.onboundary = function(event) {
+            currentPosition += event.charIndex;
+        };
+        
+        window.speechSynthesis.speak(speech);
+        isSpeaking = true;
+        isPaused = false;
+    }
+}
+
+function stopSpeech() {
+    if (speech) {
+        window.speechSynthesis.cancel();
+        speech = null;
+        isSpeaking = false;
+        isPaused = false;
+        currentPosition = 0;
+        currentText = '';
+    }
+}
+
+function updateSpeakerButton() {
+    const speakerButton = document.querySelector('.speaker-button');
+    if (speakerButton) {
+        if (isSpeaking) {
+            speakerButton.innerHTML = 'Pause';
+        } else if (isPaused) {
+            speakerButton.innerHTML = 'Resume';
+        } else {
+            speakerButton.innerHTML = 'Read Aloud';
+        }
+    }
+}
+
+function closeModal() {
+    document.getElementById('bookModal').style.display = 'none';
+    stopSpeech();
+}
+
 function previousPage() {
     if (currentChapterIndex > 0) {
         currentChapterIndex--;
@@ -216,9 +304,8 @@ function loadProgress(bookId) {
 
 // Helper function to sanitize book titles to match the ID format
 function sanitizeBookTitle(bookTitle) {
-    // Convert title to lowercase, replace spaces with dashes, and remove non-alphanumeric characters
     return bookTitle
         .toLowerCase()
-        .replace(/\s+/g, '')   // Remove all spaces
-        .replace(/[^a-z0-9]/g, '');  // Remove special characters
+        .replace(/\s+/g, '')
+        .replace(/[^a-z0-9]/g, '');
 }

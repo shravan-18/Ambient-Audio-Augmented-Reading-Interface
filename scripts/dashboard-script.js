@@ -125,14 +125,6 @@ const books = {
     }
 };
 
-let currentBook = null;
-let currentChapterIndex = 0;
-let speech = null;
-let isSpeaking = false;
-let isPaused = false;
-let currentText = '';
-let currentPosition = 0;
-
 function openBook(bookId) {
     currentBook = books[bookId];
     currentChapterIndex = 0;
@@ -160,6 +152,20 @@ function showChapter() {
     saveProgress();
 }
 
+let currentBook = null;
+let currentChapterIndex = 0;
+let speech = null;
+let isSpeaking = false;
+let isPaused = false;
+let currentText = '';
+let currentPosition = 0;
+let startTime = 0;
+let elapsedTime = 0;
+let speechRate = 1;
+
+// Average speaking rate (characters per millisecond)
+const CHARS_PER_MS = 0.05; // This can be adjusted based on testing
+
 function readAloud() {
     console.log("readAloud function called");
     
@@ -170,13 +176,10 @@ function readAloud() {
     }
     
     if (isPaused) {
-        // Resume reading from where we left off
         resumeSpeech();
     } else if (isSpeaking) {
-        // Pause the current speech
         pauseSpeech();
     } else {
-        // Start new speech
         startNewSpeech();
     }
     
@@ -186,9 +189,54 @@ function readAloud() {
 function startNewSpeech() {
     currentText = document.getElementById('page-content').innerText;
     currentPosition = 0;
+    startTime = Date.now();
+    elapsedTime = 0;
     
-    speech = new SpeechSynthesisUtterance(currentText);
-    speech.rate = 1;
+    speakFromPosition(currentPosition);
+    
+    isSpeaking = true;
+    isPaused = false;
+}
+
+function pauseSpeech() {
+    if (speech && isSpeaking) {
+        window.speechSynthesis.cancel();
+        isPaused = true;
+        isSpeaking = false;
+        
+        // Calculate approximate position based on elapsed time
+        elapsedTime = Date.now() - startTime;
+        currentPosition = Math.floor(elapsedTime * CHARS_PER_MS * speechRate);
+        
+        // Ensure we don't exceed text length
+        currentPosition = Math.min(currentPosition, currentText.length);
+        
+        // Find the nearest word boundary
+        while (currentPosition > 0 && currentText[currentPosition] !== ' ' && currentText[currentPosition] !== '\n') {
+            currentPosition--;
+        }
+    }
+}
+
+function resumeSpeech() {
+    if (isPaused && currentText) {
+        speakFromPosition(currentPosition);
+        startTime = Date.now() - elapsedTime; // Adjust start time to maintain continuity
+        isSpeaking = true;
+        isPaused = false;
+    }
+}
+
+function speakFromPosition(position) {
+    // Ensure position is within bounds
+    position = Math.max(0, Math.min(position, currentText.length));
+    
+    // Get remaining text
+    const remainingText = currentText.substring(position);
+    
+    // Create new utterance
+    speech = new SpeechSynthesisUtterance(remainingText);
+    speech.rate = speechRate;
     speech.pitch = 1;
     
     speech.onend = function() {
@@ -196,63 +244,32 @@ function startNewSpeech() {
             isSpeaking = false;
             isPaused = false;
             currentPosition = 0;
+            elapsedTime = 0;
             updateSpeakerButton();
         }
     };
     
+    // Add event listener to update position
     speech.onboundary = function(event) {
-        currentPosition = event.charIndex;
+        if (event.name === 'word') {
+            currentPosition = position + event.charIndex;
+            elapsedTime = Date.now() - startTime;
+        }
     };
     
+    window.speechSynthesis.cancel(); // Cancel any existing speech
     window.speechSynthesis.speak(speech);
-    isSpeaking = true;
-    isPaused = false;
-}
-
-function pauseSpeech() {
-    if (speech && isSpeaking) {
-        window.speechSynthesis.cancel(); // Cancel current speech
-        isPaused = true;
-        isSpeaking = false;
-    }
-}
-
-function resumeSpeech() {
-    if (isPaused && currentText) {
-        // Create new utterance starting from last known position
-        const remainingText = currentText.substring(currentPosition);
-        speech = new SpeechSynthesisUtterance(remainingText);
-        speech.rate = 1;
-        speech.pitch = 1;
-        
-        speech.onend = function() {
-            if (!isPaused) {
-                isSpeaking = false;
-                isPaused = false;
-                currentPosition = 0;
-                updateSpeakerButton();
-            }
-        };
-        
-        speech.onboundary = function(event) {
-            currentPosition += event.charIndex;
-        };
-        
-        window.speechSynthesis.speak(speech);
-        isSpeaking = true;
-        isPaused = false;
-    }
 }
 
 function stopSpeech() {
-    if (speech) {
-        window.speechSynthesis.cancel();
-        speech = null;
-        isSpeaking = false;
-        isPaused = false;
-        currentPosition = 0;
-        currentText = '';
-    }
+    window.speechSynthesis.cancel();
+    speech = null;
+    isSpeaking = false;
+    isPaused = false;
+    currentPosition = 0;
+    currentText = '';
+    elapsedTime = 0;
+    startTime = 0;
 }
 
 function updateSpeakerButton() {
@@ -265,6 +282,14 @@ function updateSpeakerButton() {
         } else {
             speakerButton.innerHTML = 'Read Aloud';
         }
+    }
+}
+
+// Optional: Add speed control
+function setSpeed(rate) {
+    speechRate = rate;
+    if (speech) {
+        speech.rate = rate;
     }
 }
 

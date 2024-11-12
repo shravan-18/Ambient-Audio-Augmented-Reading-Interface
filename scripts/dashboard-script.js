@@ -133,11 +133,27 @@ function openBook(bookId) {
     loadProgress(bookId);
 }
 
+let currentBook = null;
+let currentChapterIndex = 0;
+let speech = null;
+let isSpeaking = false;
+let isPaused = false;
+let currentText = '';
+let currentPosition = 0;
+let speechRate = 1;
+
 function showChapter() {
     const chapter = currentBook.chapters[currentChapterIndex];
     document.getElementById('book-title').innerText = currentBook.title;
     document.getElementById('chapter-title').innerText = chapter.title;
-    document.getElementById('page-content').innerText = chapter.page;
+    
+    // Set the text content and prepare for highlighting
+    const pageContent = document.getElementById('page-content');
+    pageContent.innerHTML = `
+        <span class="before"></span>
+        <span class="highlight"></span>
+        <span class="after">${chapter.page}</span>
+    `;
     
     // Toggle visibility of next/previous buttons
     const prevButton = document.querySelector('.controls button:first-of-type');
@@ -152,29 +168,27 @@ function showChapter() {
     saveProgress();
 }
 
-let currentBook = null;
-let currentChapterIndex = 0;
-let speech = null;
-let isSpeaking = false;
-let isPaused = false;
-let currentText = '';
-let currentPosition = 0;
-let startTime = 0;
-let elapsedTime = 0;
-let speechRate = 1;
+function updateHighlight(position, length = 1) {
+    const pageContent = document.getElementById('page-content');
+    if (!pageContent) return;
 
-// Average speaking rate (characters per millisecond)
-const CHARS_PER_MS = 0.05; // This can be adjusted based on testing
+    const beforeSpan = pageContent.querySelector('.before');
+    const highlightSpan = pageContent.querySelector('.highlight');
+    const afterSpan = pageContent.querySelector('.after');
+
+    if (beforeSpan && highlightSpan && afterSpan && currentText) {
+        beforeSpan.textContent = currentText.substring(0, position);
+        highlightSpan.textContent = currentText.substring(position, position + length);
+        afterSpan.textContent = currentText.substring(position + length);
+    }
+}
 
 function readAloud() {
-    console.log("readAloud function called");
-    
     if (!window.speechSynthesis) {
-        console.log("Speech synthesis not supported");
         alert("Sorry, your browser doesn't support text to speech!");
         return;
     }
-    
+
     if (isPaused) {
         resumeSpeech();
     } else if (isSpeaking) {
@@ -182,83 +196,69 @@ function readAloud() {
     } else {
         startNewSpeech();
     }
-    
+
     updateSpeakerButton();
 }
 
 function startNewSpeech() {
-    currentText = document.getElementById('page-content').innerText;
+    const pageContent = document.getElementById('page-content');
+    if (!pageContent) return;
+
+    currentText = pageContent.textContent;
     currentPosition = 0;
-    startTime = Date.now();
-    elapsedTime = 0;
-    
+
+    // Reset the content with spans for highlighting
+    pageContent.innerHTML = `
+        <span class="before"></span>
+        <span class="highlight"></span>
+        <span class="after">${currentText}</span>
+    `;
+
     speakFromPosition(currentPosition);
-    
+
     isSpeaking = true;
     isPaused = false;
 }
 
+function speakFromPosition(position) {
+    position = Math.max(0, Math.min(position, currentText.length));
+    const remainingText = currentText.substring(position);
+
+    speech = new SpeechSynthesisUtterance(remainingText);
+    speech.rate = speechRate;
+    speech.pitch = 1;
+
+    speech.onboundary = function(event) {
+        if (event.name === 'word') {
+            currentPosition = position + event.charIndex;
+            updateHighlight(currentPosition, event.charLength || event.length || 1);
+        }
+    };
+
+    speech.onend = function() {
+        if (!isPaused) {
+            stopSpeech();
+        }
+    };
+
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(speech);
+}
+
 function pauseSpeech() {
     if (speech && isSpeaking) {
-        window.speechSynthesis.cancel();
+        window.speechSynthesis.pause();
         isPaused = true;
         isSpeaking = false;
-        
-        // Calculate approximate position based on elapsed time
-        elapsedTime = Date.now() - startTime;
-        currentPosition = Math.floor(elapsedTime * CHARS_PER_MS * speechRate);
-        
-        // Ensure we don't exceed text length
-        currentPosition = Math.min(currentPosition, currentText.length);
-        
-        // Find the nearest word boundary
-        while (currentPosition > 0 && currentText[currentPosition] !== ' ' && currentText[currentPosition] !== '\n') {
-            currentPosition--;
-        }
     }
 }
 
 function resumeSpeech() {
     if (isPaused && currentText) {
-        speakFromPosition(currentPosition);
-        startTime = Date.now() - elapsedTime; // Adjust start time to maintain continuity
+        window.speechSynthesis.resume();
         isSpeaking = true;
         isPaused = false;
     }
-}
-
-function speakFromPosition(position) {
-    // Ensure position is within bounds
-    position = Math.max(0, Math.min(position, currentText.length));
-    
-    // Get remaining text
-    const remainingText = currentText.substring(position);
-    
-    // Create new utterance
-    speech = new SpeechSynthesisUtterance(remainingText);
-    speech.rate = speechRate;
-    speech.pitch = 1;
-    
-    speech.onend = function() {
-        if (!isPaused) {
-            isSpeaking = false;
-            isPaused = false;
-            currentPosition = 0;
-            elapsedTime = 0;
-            updateSpeakerButton();
-        }
-    };
-    
-    // Add event listener to update position
-    speech.onboundary = function(event) {
-        if (event.name === 'word') {
-            currentPosition = position + event.charIndex;
-            elapsedTime = Date.now() - startTime;
-        }
-    };
-    
-    window.speechSynthesis.cancel(); // Cancel any existing speech
-    window.speechSynthesis.speak(speech);
 }
 
 function stopSpeech() {
@@ -267,9 +267,15 @@ function stopSpeech() {
     isSpeaking = false;
     isPaused = false;
     currentPosition = 0;
-    currentText = '';
-    elapsedTime = 0;
-    startTime = 0;
+    
+    // Reset the page content
+    const pageContent = document.getElementById('page-content');
+    if (pageContent && currentBook && currentBook.chapters) {
+        const chapter = currentBook.chapters[currentChapterIndex];
+        pageContent.innerHTML = chapter.page;
+    }
+    
+    updateSpeakerButton();
 }
 
 function updateSpeakerButton() {
@@ -285,7 +291,6 @@ function updateSpeakerButton() {
     }
 }
 
-// Optional: Add speed control
 function setSpeed(rate) {
     speechRate = rate;
     if (speech) {
@@ -315,21 +320,33 @@ function nextPage() {
 }
 
 function saveProgress() {
+    if (!currentBook) return;
+    
     const progress = ((currentChapterIndex + 1) / currentBook.chapters.length) * 100;
+    const bookId = sanitizeBookTitle(currentBook.title);
     localStorage.setItem(currentBook.title + '_progress', currentChapterIndex);
-    document.getElementById(currentBook.title.toLowerCase().replace(' ', '') + '-progress').innerText = `progress ${progress.toFixed(0)}%`;
-}
-
-function loadProgress(bookId) {
-    const storedProgress = localStorage.getItem(books[bookId].title + '_progress');
-    if (storedProgress) {
-        document.getElementById(bookId + '-progress').innerText = `progress ${parseFloat(storedProgress).toFixed(0)}%`;
+    
+    const progressElement = document.getElementById(bookId + '-progress');
+    if (progressElement) {
+        progressElement.innerText = `progress ${progress.toFixed(0)}%`;
     }
 }
 
-// Helper function to sanitize book titles to match the ID format
-function sanitizeBookTitle(bookTitle) {
-    return bookTitle
+function loadProgress(bookId) {
+    if (!books[bookId]) return;
+    
+    const storedProgress = localStorage.getItem(books[bookId].title + '_progress');
+    const progressElement = document.getElementById(bookId + '-progress');
+    
+    if (storedProgress && progressElement) {
+        const progress = ((parseInt(storedProgress) + 1) / books[bookId].chapters.length) * 100;
+        progressElement.innerText = `progress ${progress.toFixed(0)}%`;
+    }
+}
+
+function sanitizeBookTitle(title) {
+    if (!title) return '';
+    return title
         .toLowerCase()
         .replace(/\s+/g, '')
         .replace(/[^a-z0-9]/g, '');

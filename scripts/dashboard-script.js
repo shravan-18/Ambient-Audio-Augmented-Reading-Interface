@@ -351,3 +351,53 @@ function sanitizeBookTitle(title) {
         .replace(/\s+/g, '')
         .replace(/[^a-z0-9]/g, '');
 }
+const userData = {
+    name: "John Smith",
+    age: 28,
+    favoriteGenres: ["Mystery", "Science Fiction", "Classic Literature"]
+};
+
+// Profile modal functionality
+function showProfileModal() {
+    const modal = document.createElement('div');
+    modal.className = 'profile-modal';
+    modal.innerHTML = `
+        <div class="profile-content">
+            <span class="close-profile">&times;</span>
+            <div class="profile-header">
+                <img src="css/img/User_circle.svg" alt="Profile" class="profile-avatar">
+                <h2>User Profile</h2>
+            </div>
+            <div class="profile-info">
+                <p><strong>Name:</strong> ${userData.name}</p>
+                <p><strong>Age:</strong> ${userData.age}</p>
+                <p><strong>Favorite Genres:</strong></p>
+                <ul>
+                    ${userData.favoriteGenres.map(genre => `<li>${genre}</li>`).join('')}
+                </ul>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Close button functionality
+    const closeBtn = modal.querySelector('.close-profile');
+    closeBtn.onclick = function() {
+        modal.remove();
+    };
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+        if (event.target === modal) {
+            modal.remove();
+        }
+    };
+}
+
+// Add event listener to profile icon
+document.addEventListener('DOMContentLoaded', function() {
+    const profileButton = document.querySelector('.profile-icon');
+    profileButton.addEventListener('click', showProfileModal);
+});
+

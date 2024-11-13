@@ -162,14 +162,77 @@ function showChapter() {
     const nextButton = document.querySelector('.controls button:last-of-type');
     nextButton.style.display = currentChapterIndex === currentBook.chapters.length - 1 ? 'none' : 'inline-block';
 
-    // Initialize volume controls if they don't exist
-    initializeVolumeControls();
+    // Initialize speech controls if they don't exist
+    initializeSpeechControls();
     
     // Reset speech state when changing chapters
     stopSpeech();
     updateSpeakerButton();
     
     saveProgress();
+}
+
+function initializeSpeechControls() {
+    const buttonContainer = document.querySelector('.button-container');
+    const existingControls = document.querySelector('.speech-controls');
+    
+    if (!existingControls) {
+        const speechControls = document.createElement('div');
+        speechControls.className = 'speech-controls';
+        speechControls.innerHTML = `
+            <div class="control-container">
+                <div class="control-label">Volume</div>
+                <div class="slider-container">
+                    <button class="control-btn" onclick="adjustVolume(-0.1)">
+                        <span>-</span>
+                    </button>
+                    <input 
+                        type="range" 
+                        id="volume-slider" 
+                        min="0" 
+                        max="1" 
+                        step="0.1" 
+                        value="${speechVolume}"
+                    />
+                    <button class="control-btn" onclick="adjustVolume(0.1)">
+                        <span>+</span>
+                    </button>
+                </div>
+            </div>
+            <div class="control-container">
+                <div class="control-label">Speed</div>
+                <div class="slider-container">
+                    <button class="control-btn" onclick="adjustRate(-0.25)">
+                        <span>-</span>
+                    </button>
+                    <input 
+                        type="range" 
+                        id="rate-slider" 
+                        min="0.5" 
+                        max="2" 
+                        step="0.25" 
+                        value="${speechRate}"
+                    />
+                    <button class="control-btn" onclick="adjustRate(0.25)">
+                        <span>+</span>
+                    </button>
+                </div>
+                <div class="rate-display">${speechRate}x</div>
+            </div>
+        `;
+        buttonContainer.appendChild(speechControls);
+
+        // Add event listeners
+        const volumeSlider = document.getElementById('volume-slider');
+        volumeSlider.addEventListener('input', function(e) {
+            setVolume(parseFloat(e.target.value));
+        });
+
+        const rateSlider = document.getElementById('rate-slider');
+        rateSlider.addEventListener('input', function(e) {
+            setRate(parseFloat(e.target.value));
+        });
+    }
 }
 
 function updateHighlight(position, length = 1) {
@@ -273,6 +336,26 @@ function setVolume(value) {
 
 function adjustVolume(change) {
     setVolume(speechVolume + change);
+}
+
+function setRate(value) {
+    speechRate = Math.max(0.5, Math.min(2, value));
+    if (speech) {
+        speech.rate = speechRate;
+    }
+    // Update slider position and display
+    const slider = document.getElementById('rate-slider');
+    const display = document.querySelector('.rate-display');
+    if (slider) {
+        slider.value = speechRate;
+    }
+    if (display) {
+        display.textContent = `${speechRate.toFixed(2)}x`;
+    }
+}
+
+function adjustRate(change) {
+    setRate(speechRate + change);
 }
 
 function speakFromPosition(position) {

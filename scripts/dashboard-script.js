@@ -287,43 +287,62 @@ function startNewSpeech() {
     isPaused = false;
 }
 
-function initializeVolumeControls() {
+function initializeSpeechControls() {
     const buttonContainer = document.querySelector('.button-container');
-    const existingControls = document.querySelector('.volume-controls');
+    const existingControls = document.querySelector('.speech-controls');
     
     if (!existingControls) {
-        const volumeControls = document.createElement('div');
-        volumeControls.className = 'volume-controls';
-        volumeControls.innerHTML = `
-            <div class="volume-slider-container">
-                <button class="volume-btn" onclick="adjustVolume(-0.1)">
-                    <span>-</span>
-                </button>
-                <input 
-                    type="range" 
-                    id="volume-slider" 
-                    min="0" 
-                    max="1" 
-                    step="0.1" 
-                    value="${speechVolume}"
-                />
-                <button class="volume-btn" onclick="adjustVolume(0.1)">
-                    <span>+</span>
-                </button>
+        const speechControls = document.createElement('div');
+        speechControls.className = 'speech-controls';
+        speechControls.innerHTML = `
+            <div class="control-container">
+                <div class="control-label">Volume</div>
+                <div class="slider-container">
+                    <button class="control-btn" onclick="adjustVolume(-0.1)">
+                        <span>-</span>
+                    </button>
+                    <input 
+                        type="range" 
+                        id="volume-slider" 
+                        min="0" 
+                        max="1" 
+                        step="0.1" 
+                        value="${speechVolume}"
+                        onchange="setVolume(this.value)"
+                    />
+                    <button class="control-btn" onclick="adjustVolume(0.1)">
+                        <span>+</span>
+                    </button>
+                </div>
+            </div>
+            <div class="control-container">
+                <div class="control-label">Speed</div>
+                <div class="slider-container">
+                    <button class="control-btn" onclick="adjustRate(-0.25)">
+                        <span>-</span>
+                    </button>
+                    <input 
+                        type="range" 
+                        id="rate-slider" 
+                        min="0.5" 
+                        max="2" 
+                        step="0.25" 
+                        value="${speechRate}"
+                        onchange="setRate(this.value)"
+                    />
+                    <button class="control-btn" onclick="adjustRate(0.25)">
+                        <span>+</span>
+                    </button>
+                </div>
+                <div class="rate-display">${speechRate}x</div>
             </div>
         `;
-        buttonContainer.appendChild(volumeControls);
-
-        // Add event listener to volume slider
-        const volumeSlider = document.getElementById('volume-slider');
-        volumeSlider.addEventListener('input', function(e) {
-            setVolume(parseFloat(e.target.value));
-        });
+        buttonContainer.appendChild(speechControls);
     }
 }
 
 function setVolume(value) {
-    speechVolume = Math.max(0, Math.min(1, value));
+    speechVolume = parseFloat(value);
     if (speech) {
         speech.volume = speechVolume;
     }
@@ -332,14 +351,21 @@ function setVolume(value) {
     if (slider) {
         slider.value = speechVolume;
     }
+    // If currently speaking, restart speech with new volume
+    if (isSpeaking && !isPaused) {
+        const currentPos = currentPosition;
+        stopSpeech();
+        speakFromPosition(currentPos);
+    }
 }
 
 function adjustVolume(change) {
-    setVolume(speechVolume + change);
+    const newVolume = Math.max(0, Math.min(1, speechVolume + parseFloat(change)));
+    setVolume(newVolume);
 }
 
 function setRate(value) {
-    speechRate = Math.max(0.5, Math.min(2, value));
+    speechRate = parseFloat(value);
     if (speech) {
         speech.rate = speechRate;
     }
@@ -352,10 +378,17 @@ function setRate(value) {
     if (display) {
         display.textContent = `${speechRate.toFixed(2)}x`;
     }
+    // If currently speaking, restart speech with new rate
+    if (isSpeaking && !isPaused) {
+        const currentPos = currentPosition;
+        stopSpeech();
+        speakFromPosition(currentPos);
+    }
 }
 
 function adjustRate(change) {
-    setRate(speechRate + change);
+    const newRate = Math.max(0.5, Math.min(2, speechRate + parseFloat(change)));
+    setRate(newRate);
 }
 
 function speakFromPosition(position) {

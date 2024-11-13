@@ -141,6 +141,7 @@ let isPaused = false;
 let currentText = '';
 let currentPosition = 0;
 let speechRate = 1;
+let speechVolume = 1; // Add volume control variable
 
 function showChapter() {
     const chapter = currentBook.chapters[currentChapterIndex];
@@ -160,6 +161,9 @@ function showChapter() {
     prevButton.style.display = currentChapterIndex === 0 ? 'none' : 'inline-block';
     const nextButton = document.querySelector('.controls button:last-of-type');
     nextButton.style.display = currentChapterIndex === currentBook.chapters.length - 1 ? 'none' : 'inline-block';
+
+    // Initialize volume controls if they don't exist
+    initializeVolumeControls();
     
     // Reset speech state when changing chapters
     stopSpeech();
@@ -220,12 +224,68 @@ function startNewSpeech() {
     isPaused = false;
 }
 
+function initializeVolumeControls() {
+    const buttonContainer = document.querySelector('.button-container');
+    const existingControls = document.querySelector('.volume-controls');
+    
+    if (!existingControls) {
+        const volumeControls = document.createElement('div');
+        volumeControls.className = 'volume-controls';
+        volumeControls.innerHTML = `
+            <div class="volume-slider-container">
+                <button class="volume-btn" onclick="adjustVolume(-0.1)">
+                    <span>-</span>
+                </button>
+                <input 
+                    type="range" 
+                    id="volume-slider" 
+                    min="0" 
+                    max="1" 
+                    step="0.1" 
+                    value="${speechVolume}"
+                />
+                <button class="volume-btn" onclick="adjustVolume(0.1)">
+                    <span>+</span>
+                </button>
+            </div>
+        `;
+        buttonContainer.appendChild(volumeControls);
+
+        // Add event listener to volume slider
+        const volumeSlider = document.getElementById('volume-slider');
+        volumeSlider.addEventListener('input', function(e) {
+            setVolume(parseFloat(e.target.value));
+        });
+    }
+}
+
+function setVolume(value) {
+    speechVolume = Math.max(0, Math.min(1, value));
+    if (speech) {
+        speech.volume = speechVolume;
+    }
+    // Update slider position
+    const slider = document.getElementById('volume-slider');
+    if (slider) {
+        slider.value = speechVolume;
+    }
+}
+
+function adjustVolume(change) {
+    setVolume(speechVolume + change);
+}
+
 function speakFromPosition(position) {
     position = Math.max(0, Math.min(position, currentText.length));
     const remainingText = currentText.substring(position);
 
+    if (speech) {
+        window.speechSynthesis.cancel();
+    }
+
     speech = new SpeechSynthesisUtterance(remainingText);
     speech.rate = speechRate;
+    speech.volume = speechVolume; // Set the volume
     speech.pitch = 1;
 
     speech.onboundary = function(event) {
@@ -241,7 +301,6 @@ function speakFromPosition(position) {
         }
     };
 
-    window.speechSynthesis.cancel();
     window.speechSynthesis.speak(speech);
 }
 

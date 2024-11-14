@@ -10,7 +10,12 @@ const books = {
                 "My dear Mr. Bennet," said his lady to him, "have you heard that Netherfield Park is let at last?"
                 Mr. Bennet, always reserved in his responses, listens quietly. Mrs. Bennet continues in her flurry of excitement, hoping that this man will be the solution to their daughter's futures.
                 
-                The story begins by focusing on the social pressures of marriage and the importance of securing a good match. Mr. Bingley's arrival is significant, as it sets in motion a series of events that will deeply impact the Bennet family.`
+                The story begins by focusing on the social pressures of marriage and the importance of securing a good match. Mr. Bingley's arrival is significant, as it sets in motion a series of events that will deeply impact the Bennet family.
+                The Meryton Ball is one of the most anticipated social events of the season. The Bennet family attends, with Mrs. Bennet eager to show off her daughters to Mr. Bingley. Bingley quickly becomes enamored with Jane Bennet, the eldest daughter, whose beauty and charm captivate him.
+
+                However, Mr. Darcy, Bingley’s friend, stands aloof, observing the crowd with disdain. When asked by Bingley if he would like to dance with Elizabeth Bennet, Darcy haughtily replies, “She is tolerable, but not handsome enough to tempt me.”
+                
+                Elizabeth overhears this slight and is both amused and insulted. This sets the stage for the complicated relationship that will develop between Elizabeth and Darcy throughout the novel. Darcy's initial arrogance contrasts with Elizabeth's intelligence and wit, making their eventual romance all the more satisfying.`
             },
             {
                 title: "Chapter 2: The Meryton Ball",

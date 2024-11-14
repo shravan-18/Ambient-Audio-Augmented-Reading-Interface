@@ -179,7 +179,7 @@ body{
 }
 
 .modal-content {
-    background-color: #c9c9c9;
+    background-color: #a9a9a9;
     padding: 20px;
     border-radius: 12px;
     width: 90%; /* Responsive width */
@@ -211,9 +211,11 @@ body{
 }
 
 #page-content{
-    background-color: #a1a1a1;
+    background-color: #d0d0d0;
     border: 2px solid black;
     border-radius: 16px;
+    overflow-y:auto;
+    max-height: 40vh;
 }
 
 .close {
@@ -351,13 +353,14 @@ body{
 }
 
 .profile-content {
-    background-color: white;
+    background-color: #e6e6e6;
     padding: 2rem;
     border-radius: 8px;
     min-width: 300px;
     max-width: 400px;
     position: relative;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    font-family: "Poppins", sans-serif;
 }
 
 .profile-header {
